@@ -1,0 +1,207 @@
+<html>
+<head>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/resampler.js"></script>
+  <script src="/XAudioServer.js"></script>
+  <script src="/GameBoyCore.js"></script>
+  <script src="/GameBoyIO.js"></script>
+  <script>
+    var useAudio = true;
+    var logSystemMessages = true;
+    var logChannelPoints = false;
+    var maxMessagesInChat = 15;
+    var reenableRapidFireTimeInSeconds = 60;
+    var maxRapidFireCommands = 10;
+    var romName = 'pokemon_red.gb';
+  </script>
+  <style>
+    @font-face
+    {
+      font-family: 'pokefont';
+      src: url('pokefont.ttf');
+    }
+    #chat
+    {
+      font-family: pokefont;
+      background-color: #EFFFDE;
+      color: black;
+      width: 600px;
+      height: 536px;
+      overflow: hidden;
+      font-size: 30px;
+
+      word-wrap: break-word;
+      border-width: 20px;
+      border-style: solid;
+      border-image: url('border.png') calc(100% / 3) round;
+    }
+  </style>
+</head>
+<body>
+<canvas canvas id="gameboy" width="640" height="576" style="display: none"></canvas>
+<div id="chat" class="chat" style="display: none"></div>
+<button id="show" onclick="showGameboy(true)" style="display: block">Start ROM</button>
+<script>
+  var saveName = "BaasbaseTPPSave";
+  var pokeKeymap =  '??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????? ABCDEFGHIJKLMNOPQRSTUVWXYZ():;[]abcdefghijklmnopqrstuvwxyzé?????????????????????????????????????\'??-???!.???▷▶▼♂?×./,♀0123456789';
+
+  var cout = (msg) => console.log(msg);
+  var findValue = (key) => {
+    var localStorageKey = window.localStorage.getItem(key);
+    return localStorageKey != null ? JSON.parse(localStorageKey) : null;
+  };
+  var setValue = (key, value) => {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  };
+  var deleteValue = (key) => {
+    window.localStorage.removeItem(key);
+  };
+  var readByte = (address) => {
+    return (gameboy && gameboy.memory) ? gameboy.memory[address] : 63;
+  };
+  var readHexByte = (address) => {
+    return readByte(address).toString(16).toUpperCase();
+  };
+  var readStringByte = (address) => {
+    return String.fromCharCode(readByte(address));
+  };
+  var readBytes = (address, length) => {
+    return (gameboy && gameboy.memory) ?
+            [...gameboy.memory.slice(address, address + length)] :
+            Array(length).fill(63);
+  };
+  var readHexBytes = (address, length) => {
+    return readBytes(address, length).map(b => b.toString(16).toUpperCase());
+  };
+  var readString = (address, length) => {
+    return readBytes(address, length).map(b => String.fromCharCode(b)).join('');
+  };
+  var readPokeString = (address) => {
+    const result = [];
+    for (let index = 0; ; index++)
+    {
+      const character = readByte(address + index);
+      if (character === 0x00 || character === 0x50)
+      {
+        break;
+      }
+      result.push(character);
+    }
+    return result.map(character => pokeKeymap[character]).join('');
+  };
+
+  var showGameboy = (show, rom) => {
+    document.getElementById('gameboy').style.display = show ? "block" : "none";
+    document.getElementById('chat').style.display = show ? "block" : "none";
+    document.getElementById('show').style.display = show ? "none" : "block";
+
+    if (show) {
+      var gameboyCanvas = document.getElementById('gameboy');
+
+      if (findValue(saveName) != null)
+      {
+        openState(saveName, gameboyCanvas);
+      }
+      else
+      {
+        start(gameboyCanvas, [...new Uint8Array(rom)].map(a=>String.fromCharCode(a)).join('')); // yikes
+      }
+
+      if (useAudio) { // bigger yikes
+        XAudioJSCallbackAPIEventNotificationCallback2 = null;
+        settings[0] = true;
+        var oldCallback = XAudioServer.prototype.callbackBasedWriteAudioNoCallback;
+        XAudioServer.prototype.callbackBasedWriteAudioNoCallback = function (buffer) {
+          oldCallback(buffer, 1024);
+        }
+      }
+    }
+  };
+
+  settings[0] = useAudio;
+
+  if (findValue(saveName) != null)
+  {
+    showGameboy(!useAudio);
+  }
+  else
+  {
+    fetch(romName)
+        .then(file => file.arrayBuffer())
+        .then(text => {
+            showGameboy(!useAudio, text);
+        });
+  }
+
+  var commands = [];
+  var lastKeyTimeout = null;
+  var processCommands = () => {
+    if (lastKeyTimeout == null && commands.length > 0)
+    {
+      GameBoyKeyDown(commands[0]);
+      lastKeyTimeout = setTimeout(() => {
+        GameBoyKeyUp(commands.shift());
+        lastKeyTimeout = null;
+        setTimeout(() => processCommands(), 40);
+      }, 260);
+    }
+  };
+
+  var appendMessage = (userName, message) => {
+    var msg = document.createElement('div');
+    var span = document.createElement('span');
+    span.appendChild(document.createTextNode(userName + ': ' + message));
+    msg.appendChild(span);
+    var chat = document.getElementById('chat');
+    chat.insertBefore(msg, chat.firstChild);
+    if (chat.children.length > maxMessagesInChat) {
+      chat.removeChild(chat.lastChild);
+    }
+  };
+
+  var lastChatter = null;
+  var rapidFireTimeout = 0;
+
+  var socket = io();
+  socket.on('connect', data => {
+    if (logSystemMessages) {
+      appendMessage('SYSTEM', 'Connected to server');
+    }
+  });
+  socket.on('disconnect', data => {
+    if (logSystemMessages) {
+      appendMessage('SYSTEM', 'Disconnected from server');
+    }
+  });
+  socket.on('COMMAND', data => {
+    const user = data.user;
+    const wasLastChatter = lastChatter === null || lastChatter === user;
+    lastChatter = user;
+    if (wasLastChatter && Date.now() > (rapidFireTimeout + reenableRapidFireTimeInSeconds * 1000)) {
+      const limitedCommands = data.commands.slice(0, maxRapidFireCommands);
+      commands.push(...limitedCommands);
+      limitedCommands.forEach(command => appendMessage(user, command));
+    } else {
+      const command = data.commands[0];
+      commands.push(command);
+      appendMessage(user, command);
+      if (!wasLastChatter) {
+        rapidFireTimeout = Date.now();
+      }
+    }
+    processCommands();
+  });
+  socket.on('SAVE', data => {
+      saveState(saveName);
+  });
+  socket.on('DELETE', data => {
+      deleteValue(saveName);
+  });
+  socket.on('CHANNEL_POINTS', data => {
+    if (logChannelPoints) {
+      appendMessage(`${data.user}`, `${data.id}`);
+    }
+  });
+</script>
+</body>
+</html>
