@@ -7,13 +7,13 @@ It has support for custom events like follows, subscriptions, channel points and
 
 ## Prerequisites
 
-- Navigate to [your twitch developer dashboard](https://dev.twitch.tv/console) and create a new Application. You will need the client id and client secret
+- Navigate to [your twitch developer dashboard](https://dev.twitch.tv/console) and create a new application. You will need the client id and client secret
 - Download a rom and save it to the assets folder
 - Set up an SSL certificate, you will need `privkey.pem chain.pem cert.pem`
 
 ## Installation
 
-- Edit .env, this file contains the project configuration
+- Edit *.env*, this file contains the project configuration
   - Change the value for the webhook secret
   - You can get an oauth token from [Twitch TMI](https://twitchapps.com/tmi/)
 - Open *index.html* and edit the variables at the top, especially the rom name
