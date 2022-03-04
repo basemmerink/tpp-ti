@@ -40,7 +40,8 @@ For more examples look at `app.ts#63`
 ## Credits
 
 This is made by baasbase
-https://twitch.tv/baasbase
-https://twitter.com/baasbase
-https://www.youtube.com/channel/UCd5RjtL4EJwoeLJWiofGG3Q
-https://ko-fi.com/baasbase
+
+https://twitch.tv/baasbase  
+https://twitter.com/baasbase  
+https://www.youtube.com/channel/UCd5RjtL4EJwoeLJWiofGG3Q  
+https://ko-fi.com/baasbase  
