@@ -122,7 +122,17 @@ app.post('/eventsub', (req, res) => {
 
 app.all('/*', (req, res, next) =>
 {
-    res.sendFile('index.html', {root: __dirname + '/..'});
+    const pathTokens = req.path.split('/');
+    switch (pathTokens[1])
+    {
+        case 'twitch':
+            twitchModule.setCode(req.query.code);
+            res.redirect('/');
+            break;
+        default:
+            res.sendFile('index.html', {root: __dirname + '/..'});
+            break;
+    }
 });
 
 function getHmacMessage(request) {

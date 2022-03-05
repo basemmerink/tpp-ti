@@ -38,7 +38,7 @@
   </style>
 </head>
 <body>
-<canvas canvas id="gameboy" width="640" height="576" style="display: none"></canvas>
+<canvas id="gameboy" width="640" height="576" style="display: none"></canvas>
 <div id="chat" class="chat" style="display: none"></div>
 <button id="show" onclick="showGameboy(true)" style="display: block">Start ROM</button>
 <script>
@@ -89,6 +89,8 @@
     }
     return result.map(character => pokeKeymap[character]).join('');
   };
+
+  // 0xA6AA7 (40) Oak: This isn't the time to use that! (or 0x22A00)
 
   var showGameboy = (show, rom) => {
     document.getElementById('gameboy').style.display = show ? "block" : "none";

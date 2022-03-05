@@ -7,7 +7,9 @@ It has support for custom events like follows, subscriptions, channel points and
 
 ## Prerequisites
 
-- Navigate to [your twitch developer dashboard](https://dev.twitch.tv/console) and create a new application. You will need the client id and client secret
+- Navigate to [your twitch developer dashboard](https://dev.twitch.tv/console) and create a new Application.
+  - Write down the client id and client secret for later
+  - Enter a new OAuth Redirect URL: `example.com/twitch` - change example.com with your domain name or external IP
 - Download a rom and save it to the assets folder
 - Set up an SSL certificate, you will need `privkey.pem chain.pem cert.pem`
 
@@ -22,6 +24,8 @@ It has support for custom events like follows, subscriptions, channel points and
 ## Running the server
 
 - Run `npm run start` from bash/cmd
+- If you run it for the first time, you will be prompted to authorize on Twitch.  
+  - Log in with the account for the channel on which you are going to stream TPP
 
 ## Adding custom events
 
