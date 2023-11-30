@@ -48,4 +48,8 @@ This is made by baasbase
 https://twitch.tv/baasbase  
 https://twitter.com/baasbase  
 https://www.youtube.com/channel/UCd5RjtL4EJwoeLJWiofGG3Q  
-https://ko-fi.com/baasbase  
+https://ko-fi.com/baasbase
+
+Gameboy color js emulator by Grant Galitz
+
+https://github.com/taisel
